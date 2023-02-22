@@ -8,9 +8,9 @@ from gammapy.data import EventList
 
 log = logging.getLogger(__name__)
 
-__all__ = ["ComputePintPhase", "PintPhaseFermi"]
+__all__ = ["PintPhase", "PintPhaseFermi"]
 
-class ComputePintPhase:
+class PintPhase:
 
     def __init__(
         self,
@@ -40,10 +40,10 @@ class ComputePintPhase:
         self.include_gps = include_gps
         self.planets = planets
 
-    def run(self, collum_name="PHASE", overwrite=True, meta_entry="PHS_LOG"):
+    def run(self, column_name="PHASE", overwrite=True, meta_entry="PHS_LOG"):
 
         self.compute_phase()
-        self.add_collumn(column_name=collum_name, overwrite=overwrite)
+        self.add_collumn(column_name=column_name, overwrite=overwrite)
         self.add_meta(meta_entry=meta_entry)
 
         return EventList(self.events.table)
@@ -60,7 +60,7 @@ class ComputePintPhase:
         self.phase = np.where(phase < 0.0, phase + 1.0, phase)
 
 
-    def add_collumn(self, column_name="PHASE", overwrite=True):
+    def add_column(self, column_name="PHASE", overwrite=True):
 
         if overwrite:
             self.events.table[column_name] = self.phase
@@ -71,8 +71,7 @@ class ComputePintPhase:
                 self._check_column(column_name=column_name, overwrite=overwrite)
 
     def add_meta(self, meta_entry="PHSE_LOG"):
-
-        self.events.table.meta[meta_entry] = phase_log
+        pass
 
 
     def _check_column(self, column_name, overwrite):
@@ -83,7 +82,7 @@ class ComputePintPhase:
             return 0
         else: return 1
 
-class PintPhaseFermi(ComputePintPhase):
+class PintPhaseFermi(PintPhase):
 
     def _check_event_file(self):
         if self.event_file is None:
