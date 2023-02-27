@@ -1,0 +1,20 @@
+[project]
+name = "GammaPulsar"
+version = "0.0.1"
+authors = [
+    { name="Maxime Regeard", email="regeard@in2p3.fr" },
+]
+description = "Package for pulsar analysis in gamma astronomy"
+readme = README.md
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Development Status :: 2 - Pre-Alpha",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/MRegeard/GammaPulsar"
+"Bug Tracker" = "https://github.com/MRegeard/GammaPulsar/issues"
+
