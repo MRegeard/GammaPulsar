@@ -1,7 +1,0 @@
-LICENSE
-README.md
-setup.py
-GammaPulsar.egg-info/PKG-INFO
-GammaPulsar.egg-info/SOURCES.txt
-GammaPulsar.egg-info/dependency_links.txt
-GammaPulsar.egg-info/top_level.txt
