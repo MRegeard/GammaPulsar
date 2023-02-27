@@ -2,13 +2,14 @@ import logging
 from pint import toa
 from pint import models
 from pint.fermi_toas import load_Fermi_TOAs
+from pint.observatory import Observatory
 import numpy as np
 import astropy.units as u
-from astropy.io import fits
 from gammapy.data import EventList
 from GammaPulsar.data import FermiObservation
 
 __all__ = ["PhaseMaker", "FermiPhaseMaker"]
+
 
 class PhaseMaker:
 
@@ -86,16 +87,18 @@ class PhaseMaker:
         else:
             return 1
 
+
 class FermiPhaseMaker:
 
     def __init__(
-        self,
-        observation=None,
-        ephemeris_file=None,
-        ephem="DE421",
-        include_bipm=True,
-        include_gps=True,
-        planets=True,
+            self,
+            observation=None,
+            ephemeris_file=None,
+            weightcolumn=None,
+            ephem="DE421",
+            include_bipm=False,
+            include_gps=False,
+            planets=False,
     ):
         if not isinstance(observation, FermiObservation):
             raise TypeError(f"observation must be instance of FermiObservation")
@@ -105,10 +108,13 @@ class FermiPhaseMaker:
         self.include_bipm = include_bipm
         self.include_gps = include_gps
         self.planets = planets
-
+        self.weightcolumn = weightcolumn
+        self.phase = None
 
     def compute_phase(self):
-        toa_list = load_Fermi_TOAs(ft1name=self.observation.events.filename)
+        toa_list = load_Fermi_TOAs(ft1name=self.observation.events.filename,
+                                   weightcolumn=self.weightcolumn,
+                                   targetcoord=self.observation.events.center)
         ts = toa.get_TOAs_list(toa_list=toa_list,
                                ephem=self.ephem,
                                include_bipm=self.include_bipm,
@@ -126,7 +132,6 @@ class FermiPhaseMaker:
                 self.observation.events.table[column_name] = self.phase.astype('float64')
             else:
                 self._check_column(column_name=column_name, overwrite=overwrite)
-
 
     def add_meta(self, meta_entry="PHSE_LOG"):
         pass
@@ -148,5 +153,3 @@ class FermiPhaseMaker:
             return 0
         else:
             return 1
-
-

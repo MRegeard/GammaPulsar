@@ -45,6 +45,11 @@ class FermiEventList:
             raise NotImplementedError
 
     @property
+    def center(self):
+
+        return self.region.center
+
+    @property
     def energy(self):
 
         meta = self.table.meta
@@ -128,7 +133,7 @@ class FermiSpacecraft:
     def read(cls, filename, **kwargs):
         filename = make_path(filename)
         table = Table.read(filename, **kwargs)
-        return cls(table)
+        return cls(table, filename=filename)
 
 
 class FermiObservation:
@@ -204,12 +209,18 @@ class FermiObservations(collections.abc.MutableSequence):
         return file_list
 
     @classmethod
-    def from_files(cls, events_file, spacecraft, gti=True):
+    def from_files(cls, events_files, spacecraft, gti=True):
 
         observations = []
-        for file in events_file:
+        if isinstance(spacecraft, list):
+            raise TypeError(f"a unique spacecraft file is allowed to create FermiObservations")
+
+        spacecraft = FermiSpacecraft.read(spacecraft)
+        for file in events_files:
             events = FermiEventList.read(file)
             if gti:
                 gti = GTI.read(file)
+            else:
+                gti = None
             observations.append(FermiObservation(events=events, gti=gti, spacecraft=spacecraft))
         return FermiObservations(observations=observations)
