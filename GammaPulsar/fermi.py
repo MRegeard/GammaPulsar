@@ -1,14 +1,13 @@
-import os
 import collections.abc
+import glob
+import os
 from fermipy.gtanalysis import GTAnalysis
 from GammaPulsar.config import FermiConfig, FermiSerializedConfig
-import glob
 
 __all__ = ["FermiAnalysis", "FermiAnalysisList", "FermiAnalysisSerialize"]
 
 
 class FermiAnalysis(GTAnalysis):
-
     def __init__(
         self,
         config,
@@ -17,7 +16,7 @@ class FermiAnalysis(GTAnalysis):
 
         self._fermi_config = FermiConfig(config)
         self._dir_path = dir_path
-        super().__init__(config, logging={'verbosity': 3})
+        super().__init__(config, logging={"verbosity": 3})
 
     @property
     def view_config(self):
@@ -29,12 +28,19 @@ class FermiAnalysis(GTAnalysis):
 
         return self._dir_path
 
-    def run_fit(self, source_name, free_source=True, free_distance=3.0, free_param='norm', free_diff=True):
+    def run_fit(
+        self,
+        source_name,
+        free_source=True,
+        free_distance=3.0,
+        free_param="norm",
+        free_diff=True,
+    ):
 
         self.free_sources(distance=free_distance, pars=free_param)
         if free_diff:
-            self.free_source('galdiff')
-            self.free_source('isodiff')
+            self.free_source("galdiff")
+            self.free_source("isodiff")
         if free_source:
             self.free_source(source_name)
         fit_results = self.fit()
@@ -46,7 +52,6 @@ class FermiAnalysis(GTAnalysis):
 
 
 class FermiAnalysisList(collections.abc.MutableSequence):
-
     def __init__(self, analysis=None):
         self._analysis = analysis or []
 
@@ -93,7 +98,6 @@ class FermiAnalysisList(collections.abc.MutableSequence):
 
 
 class FermiAnalysisSerialize:
-
     def __init__(
         self,
         analysis_config,
@@ -102,9 +106,11 @@ class FermiAnalysisSerialize:
     ):
 
         self._dir_prefix = dir_prefix
-        self._config_prefix=config_prefix
+        self._config_prefix = config_prefix
         self._analysis_config = FermiSerializedConfig(analysis_config)
-        self._fermi_analysis = FermiAnalysisList.from_file(configs=self.list_config, dir_paths=self.list_dir)
+        self._fermi_analysis = FermiAnalysisList.from_file(
+            configs=self.list_config, dir_paths=self.list_dir
+        )
 
     @property
     def analysis_config(self):
@@ -131,7 +137,7 @@ class FermiAnalysisSerialize:
 
         config_list = []
         for directory in self.list_dir:
-            config_list.append(glob.glob(directory + '/' + self.config_prefix)[0])
+            config_list.append(glob.glob(directory + "/" + self.config_prefix)[0])
         return config_list
 
     @property
@@ -158,11 +164,14 @@ class FermiAnalysisSerialize:
                 roi.spectral_pars["Prefactor"] = self.analysis_config.prefactor
                 roi.spectral_pars["Scale"] = self.analysis_config.scale
 
-            ana.free_sources(distance=self.analysis_config.free_sources_distance, pars=self.analysis_config.free_sources_param)
+            ana.free_sources(
+                distance=self.analysis_config.free_sources_distance,
+                pars=self.analysis_config.free_sources_param,
+            )
             if self.analysis_config.free_galdiff:
-                ana.free_source('galdiff')
+                ana.free_source("galdiff")
             if self.analysis_config.free_isodiff:
-                ana.free_source('isodiff')
+                ana.free_source("isodiff")
             if self.analysis_config.free_source:
                 ana.free_source(self.analysis_config.source_name)
             roi = ana.roi[self.analysis_config.source_name]
@@ -183,20 +192,3 @@ class FermiAnalysisSerialize:
         setattr(self, "roi_postfit", roi_postfit)
         setattr(self, "fit_results", fit_results)
         setattr(self, "flux_point", sed)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

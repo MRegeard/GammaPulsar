@@ -1,24 +1,23 @@
 import collections.abc
-from gammapy.utils.scripts import make_path
-from astropy.table import Table
-from astropy.io import fits
-from astropy.coordinates import SkyCoord
-from regions import CircleSkyRegion
 import copy
 import re
-import yaml
 import astropy.units as u
+from astropy.coordinates import SkyCoord
+from astropy.io import fits
+from astropy.table import Table
+from regions import CircleSkyRegion
+from gammapy.utils.scripts import make_path
 
-__all__ = ["FermiEventList",
-           "GTI",
-           "FermiSpacecraft",
-           "FermiObservation",
-           "FermiObservations",
-           ]
+__all__ = [
+    "FermiEventList",
+    "GTI",
+    "FermiSpacecraft",
+    "FermiObservation",
+    "FermiObservations",
+]
 
 
 class FermiEventList:
-
     def __init__(self, table, filename=None):
 
         self.table = table
@@ -33,12 +32,12 @@ class FermiEventList:
     def region(self):
 
         meta = self.table.meta
-        ds3 = [meta['DSTYP3'], meta['DSUNI3'], meta['DSVAL3']]
+        ds3 = [meta["DSTYP3"], meta["DSUNI3"], meta["DSVAL3"]]
 
-        if ds3[0] == 'POS(RA,DEC)' and ds3[1] == 'deg':
+        if ds3[0] == "POS(RA,DEC)" and ds3[1] == "deg":
 
-            region_str = re.split(r'[(,)]', ds3[2])
-            center = SkyCoord(region_str[1], region_str[2], unit=ds3[1], frame='icrs')
+            region_str = re.split(r"[(,)]", ds3[2])
+            center = SkyCoord(region_str[1], region_str[2], unit=ds3[1], frame="icrs")
             return CircleSkyRegion(center, radius=float(region_str[3]) * u.deg)
         else:
             raise NotImplementedError
@@ -52,8 +51,8 @@ class FermiEventList:
     def energy(self):
 
         meta = self.table.meta
-        DS5 = [meta['DSTYP5'], meta['DSUNI5'], meta['DSVAL5']]
-        energy = [float(_) for _ in DS5[2].split(':')]
+        DS5 = [meta["DSTYP5"], meta["DSUNI5"], meta["DSVAL5"]]
+        energy = [float(_) for _ in DS5[2].split(":")]
         return energy * u.Unit(DS5[1])
 
     @property
@@ -78,8 +77,6 @@ class FermiEventList:
 
     def write(self, filename, gti=None, overwrite=False):
 
-        meta_dict = self.table.meta
-
         filename = make_path(filename)
 
         primary_hdu = fits.PrimaryHDU()
@@ -88,7 +85,7 @@ class FermiEventList:
 
         if gti is not None:
             if not isinstance(gti, GTI):
-                raise TypeError(f"gti must be an instance of GTI")
+                raise TypeError("gti must be an instance of GTI")
             hdu_gti = gti.to_table_hdu()
             hdu_all.append(hdu_gti)
 
@@ -96,7 +93,6 @@ class FermiEventList:
 
 
 class GTI:
-
     def __init__(self, table):
         self.table = table
 
@@ -119,7 +115,6 @@ class GTI:
 
 
 class FermiSpacecraft:
-
     def __init__(self, table, filename=None):
         self.table = table
         self._filename = filename
@@ -137,10 +132,10 @@ class FermiSpacecraft:
 
 class FermiObservation:
     def __init__(
-            self,
-            events=None,
-            gti=None,
-            spacecraft=None,
+        self,
+        events=None,
+        gti=None,
+        spacecraft=None,
     ):
         self._events = events
         self._gti = gti
@@ -167,7 +162,6 @@ class FermiObservation:
 
 
 class FermiObservations(collections.abc.MutableSequence):
-
     def __init__(self, observations=None):
         self._observations = observations or []
 
@@ -212,7 +206,9 @@ class FermiObservations(collections.abc.MutableSequence):
 
         observations = []
         if isinstance(spacecraft, list):
-            raise TypeError(f"a unique spacecraft file is allowed to create FermiObservations")
+            raise TypeError(
+                "a unique spacecraft file is allowed to create FermiObservations"
+            )
 
         spacecraft = FermiSpacecraft.read(spacecraft)
         for file in events_files:
@@ -221,5 +217,7 @@ class FermiObservations(collections.abc.MutableSequence):
                 gti = GTI.read(file)
             else:
                 gti = None
-            observations.append(FermiObservation(events=events, gti=gti, spacecraft=spacecraft))
+            observations.append(
+                FermiObservation(events=events, gti=gti, spacecraft=spacecraft)
+            )
         return FermiObservations(observations=observations)

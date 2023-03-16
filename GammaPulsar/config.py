@@ -1,20 +1,16 @@
+import os
+from pathlib import Path
 import yaml
 from yaml.loader import SafeLoader
-from pathlib import Path
-import os
 
 __all__ = ["FermiConfig", "FermiSerializedConfig"]
 
 
 class FermiConfig:
-
-    def __init__(
-        self,
-        config_file
-    ):
+    def __init__(self, config_file):
 
         self._config_file = config_file
-        with open(config_file, 'r') as stream:
+        with open(config_file, "r") as stream:
             config = yaml.safe_load(stream)
             self._dict = config
             stream.close()
@@ -22,27 +18,27 @@ class FermiConfig:
     @property
     def selection(self):
 
-        return self._dict['selection']
+        return self._dict["selection"]
 
     @property
     def data(self):
 
-        return self._dict['data']
+        return self._dict["data"]
 
     @property
     def binning(self):
 
-        return self._dict['binning']
+        return self._dict["binning"]
 
     @property
     def gtlike(self):
 
-        return self._dict['gtlike']
+        return self._dict["gtlike"]
 
     @property
     def model(self):
 
-        return self._dict['model']
+        return self._dict["model"]
 
     @property
     def config_file(self):
@@ -57,16 +53,15 @@ class FermiConfig:
 
         return self._dict
 
-
     def write(self, filename, **kwargs):
 
         if isinstance(filename, str):
             filename = Path(filename)
 
-        if filename.name[-5:] != '.yaml':
-            filename = Path(filename.name + 'yaml')
+        if filename.name[-5:] != ".yaml":
+            filename = Path(filename.name + "yaml")
 
-        with open(filename, 'w') as outfile:
+        with open(filename, "w") as outfile:
             yaml.dump(self._dict, outfile, sort_keys=False, **kwargs)
             outfile.close()
 
@@ -76,26 +71,31 @@ class FermiConfig:
             base_path = Path("./")
         else:
             base_path = Path(dir_path)
-        for edge_min, edge_max in zip(phase_axis.edges_min.value, phase_axis.edges_max.value):
+        for edge_min, edge_max in zip(
+            phase_axis.edges_min.value, phase_axis.edges_max.value
+        ):
             dir_name = Path("phase_" + str(edge_min) + "-" + str(edge_max))
             out_dir = Path(os.path.join(base_path, dir_name))
             out_dir.mkdir(parents=True, exist_ok=True)
-            self.add_entry(primary_dict='selection', entry='phasemin', value=float(edge_min))
-            self.add_entry(primary_dict='selection', entry='phasemax', value=float(edge_max))
+            self.add_entry(
+                primary_dict="selection", entry="phasemin", value=float(edge_min)
+            )
+            self.add_entry(
+                primary_dict="selection", entry="phasemax", value=float(edge_max)
+            )
             outfile = Path("config_" + str(edge_min) + "-" + str(edge_max) + ".yaml")
             full_path = Path(os.path.join(out_dir, outfile))
             self.write(full_path)
 
 
 class FermiSerializedConfig:
-
     def __init__(
         self,
         config_file,
     ):
 
         self.config_file = config_file
-        with open(config_file, 'r') as stream:
+        with open(config_file, "r") as stream:
             config = yaml.load(stream, Loader=SafeLoader)
             self.to_dict = config
             stream.close()
@@ -103,7 +103,7 @@ class FermiSerializedConfig:
     @property
     def source_name(self):
 
-        return self.to_dict['source_name']
+        return self.to_dict["source_name"]
 
     @property
     def free_sources_distance(self):
@@ -184,4 +184,3 @@ class FermiSerializedConfig:
     def sed_type(self):
 
         return self.to_dict["sed"]["sed_type"]
-
