@@ -90,7 +90,8 @@ class PhaseMaker:
 
         if self.events.table[column_name]:
             log.debug(
-                f"Passing {column_name} with overwrite : {overwrite}. Column name {column_name} already exist. Aborting add_column"
+                f"Passing {column_name} with overwrite : {overwrite}. Column name {column_name} already exist. "
+                "Aborting add_column."
             )
             return 0
         else:
