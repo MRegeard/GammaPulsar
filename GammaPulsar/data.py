@@ -1,5 +1,4 @@
 import collections.abc
-from gammapy.data import EventList
 from gammapy.utils.scripts import make_path
 from astropy.table import Table
 from astropy.io import fits
@@ -34,12 +33,12 @@ class FermiEventList:
     def region(self):
 
         meta = self.table.meta
-        DS3 = [meta['DSTYP3'], meta['DSUNI3'], meta['DSVAL3']]
+        ds3 = [meta['DSTYP3'], meta['DSUNI3'], meta['DSVAL3']]
 
-        if DS3[0] == 'POS(RA,DEC)' and DS3[1] == 'deg':
+        if ds3[0] == 'POS(RA,DEC)' and ds3[1] == 'deg':
 
-            region_str = re.split(r'[(,)]', DS3[2])
-            center = SkyCoord(region_str[1], region_str[2], unit=DS3[1], frame='icrs')
+            region_str = re.split(r'[(,)]', ds3[2])
+            center = SkyCoord(region_str[1], region_str[2], unit=ds3[1], frame='icrs')
             return CircleSkyRegion(center, radius=float(region_str[3]) * u.deg)
         else:
             raise NotImplementedError

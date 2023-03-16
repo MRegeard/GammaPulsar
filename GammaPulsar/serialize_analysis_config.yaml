@@ -1,0 +1,41 @@
+source_name: "Vela pulsar"
+free_sources:
+  distance: 3
+  pars: "norm"
+free_diff:
+  galdiff: True
+  isodiff: True
+free_source: True
+roi:
+  write: True
+  filename: "fit0"
+spectral:
+  default: True
+  spectrum_type: PowerLaw
+  index:
+    error: nan
+    free: False
+    max: 5.0
+    min: 0.0
+    name: 'Index'
+    scale: -1.0
+    value: 1.5
+  prefactor:
+    error: nan
+    free: False
+    max: 1000.0
+    min: 1e-05
+    name: 'Prefactor'
+    scale: 1e-11
+    value: 0.5
+  scale:
+    error: nan
+    free: False
+    max: 1030.5
+    min: 1030.5
+    name: 'Scale'
+    scale: 1.0
+    value: 1030.5
+sed:
+  sed_type: "e2dnde"
+

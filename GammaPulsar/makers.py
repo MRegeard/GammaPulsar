@@ -7,6 +7,9 @@ import numpy as np
 import astropy.units as u
 from gammapy.data import EventList
 from GammaPulsar.data import FermiObservation
+from pint.observatory.satellite_obs import get_satellite_observatory
+from pathlib import Path
+
 
 __all__ = ["PhaseMaker", "FermiPhaseMaker"]
 
@@ -112,6 +115,9 @@ class FermiPhaseMaker:
         self.phase = None
 
     def compute_phase(self):
+
+        get_satellite_observatory("Fermi", self.observation.spacecraft.filename, overwrite=True)
+
         toa_list = load_Fermi_TOAs(ft1name=self.observation.events.filename,
                                    weightcolumn=self.weightcolumn,
                                    targetcoord=self.observation.events.center)
@@ -153,3 +159,65 @@ class FermiPhaseMaker:
             return 0
         else:
             return 1
+
+
+class FermiBinnedConfigMaker:
+
+    def __init__(self, fermi_config, axis_name, map_axis):
+
+        self.fermi_config = fermi_config
+        self.axis_name = axis_name
+        self.map_axis = map_axis
+
+    @staticmethod
+    def _make_base_path(self, base_dir=None):
+
+        if base_dir is None:
+            base_path = Path('./')
+        else:
+            if isinstance(base_dir, str):
+                base_path = Path(base_dir)
+            else:
+                base_path = base_dir
+        return base_path
+
+    @staticmethod
+    def _make_dir_name(name, value_min, value_max):
+
+        if not isinstance(name, str):
+            name = str(name)
+        if not isinstance(value_min, str):
+            value_min = str(value_min)
+        if not isinstance(value_max, str):
+            value_max = str(value_max)
+
+        return Path(name + "_" + value_min + "-" + value_max)
+
+    @staticmethod
+    def _make_config_name(value_min, value_max, name="config"):
+
+        if not isinstance(name, str):
+            name = str(name)
+        if not isinstance(value_min, str):
+            value_min = str(value_min)
+        if not isinstance(value_max, str):
+            value_max = str(value_max)
+
+        return Path(name + '_' + value_min + '-' + value_max + '.yaml')
+
+    def run(self, base_dir=None):
+
+        base_path = self._make_base_path(base_dir=base_dir)
+
+        for edge_min, edge_max in zip(self.map_axis.edges_min.value, self.map_axis.edges_max.value):
+
+            dir_name = self._make_dir_name(name=self.axis_name, value_min=edge_min, value_max=edge_max)
+            out_dir = Path(os.path.join(base_path, dir_name))
+            out_dir.mkdir(parents=True, exist_ok=True)
+
+            self.fermi_config.add_entry(primary_dict='selection', entry='phasemin', value=float(edge_min))
+            self.fermi_config.add_entry(primary_dict='selection', entry='phasemax', value=float(edge_max))
+
+            outfile = self._make_config_name(value_min=edge_min, value_max=edge_max, name=self.axis_name)
+            full_path = Path(os.path.join(out_dir, outfile))
+            self.fermi_config.write(full_path)
