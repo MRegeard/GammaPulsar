@@ -2,14 +2,14 @@ import os
 from pathlib import Path
 import numpy as np
 import astropy.units as u
+from gammapy.data import EventList
 from loguru import logger as log
 from pint import models, toa
 from pint.fermi_toas import load_Fermi_TOAs
 from pint.observatory.satellite_obs import get_satellite_observatory
 from GammaPulsar.data import FermiObservation
-from gammapy.data import EventList
 
-__all__ = ["PhaseMaker", "FermiPhaseMaker"]
+__all__ = ["PhaseMaker", "FermiPhaseMaker", "FermiBinnedConfigMaker"]
 
 
 class PhaseMaker:
@@ -141,7 +141,7 @@ class FermiPhaseMaker:
         phase = self.model.phase(toas=ts, abs_phase=True)[1]
         self.phase = np.where(phase < 0.0, phase + 1.0, phase)
 
-    def add_column(self, column_name="PHASE", overwrite=True):
+    def add_column(self, column_name="PULSE_PHASE", overwrite=True):
 
         if overwrite:
             self.observation.events.table[column_name] = self.phase.astype("float64")

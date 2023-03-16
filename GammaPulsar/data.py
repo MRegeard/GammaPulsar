@@ -18,9 +18,10 @@ __all__ = [
 
 
 class FermiEventList:
-    def __init__(self, table, filename=None):
+    def __init__(self, table, primary_hdu=None, filename=None):
 
         self.table = table
+        self._primary_hdu = primary_hdu
         self._filename = filename
 
     @property
@@ -64,12 +65,16 @@ class FermiEventList:
         return copy.deepcopy(self)
 
     @classmethod
-    def read(cls, filename, **kwargs):
+    def read(cls, filename, primary=True, **kwargs):
 
         filename = make_path(filename)
         kwargs.setdefault("hdu", "EVENTS")
         table = Table.read(filename, **kwargs)
-        return cls(table=table, filename=filename)
+        if primary:
+            primary_hdu = fits.PrimaryHDU().readfrom(filename)
+        else:
+            primary_hdu = None
+        return cls(table=table, primary_hdu=primary_hdu, filename=filename)
 
     def to_table_hdu(self):
 
@@ -79,7 +84,10 @@ class FermiEventList:
 
         filename = make_path(filename)
 
-        primary_hdu = fits.PrimaryHDU()
+        if self._primary_hdu is None:
+            primary_hdu = fits.PrimaryHDU()
+        else:
+            primary_hdu = self._primary_hdu
         hdu_evt = self.to_table_hdu()
         hdu_all = fits.HDUList([primary_hdu, hdu_evt])
 
