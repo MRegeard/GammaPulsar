@@ -1,13 +1,6 @@
-from .data import (
-    FermiEvents,
-    FermiFiles,
-    FermiObservation,
-    FermiObservations,
-    FermiSpacecraft,
-)
+from .data import FermiEvents, FermiObservation, FermiObservations, FermiSpacecraft
 
 __all__ = [
-    "FermiFiles",
     "FermiEvents",
     "FermiSpacecraft",
     "FermiObservation",

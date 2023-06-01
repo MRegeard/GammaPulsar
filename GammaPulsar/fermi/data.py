@@ -1,44 +1,12 @@
 import collections.abc
+import logging as log
 
 __all__ = [
-    "FermiFiles",
     "FermiEvents",
     "FermiSpacecraft",
     "FermiObservation",
     "FermiObservations",
 ]
-
-
-class FermiFiles:
-    """
-    Fermi files container
-
-    Parameters
-    __________
-    events_files : list of str
-        List of path to events files
-    spacecraft_file : str
-        Path to spacecraft file
-    """
-
-    def __init__(self, events_files, spacecraft_file):
-        self._events_files = events_files
-        self._spacecraft_file = spacecraft_file
-
-    @property
-    def event_files(self):
-        """Return the list of events files path"""
-        return self._events_files
-
-    @property
-    def spacecraft_file(self):
-        """Return the path to spacecraft file"""
-        return self._spacecraft_file
-
-    def to_fermi_events(self):
-        fermi_events_list = []
-        for ev in self.event_files:
-            fermi_events_list.append()
 
 
 class FermiEvents:
@@ -147,3 +115,44 @@ class FermiObservations(collections.abc.MutableSequence):
             return self._observations.index(key)
         else:
             raise TypeError(f"Invalid type: {type(key)!r}")
+
+    @classmethod
+    def from_files(cls, events_files, spacecrafts_files):
+        """Create a FermiObservations object from a list of events files and spacecraft files
+
+        Parameters
+        ----------
+        events_files : list of str
+            List of path to events files
+        spacecrafts_files : str or list of str
+            Path or list of path to spacecrafts files. If a list is given it must either be of length one
+            or of the same length as events_files. If the length of the list is one (or if spacecraft is a string),
+            the same spacecraft file will be applied to each events file. If the length of the list matches the
+            length of events_files, each spacecraft file in the list will be associated with the corresponding
+            events file in events_files
+        """
+
+        observations = []
+        if isinstance(spacecrafts_files, str):
+            spacecrafts_files = [spacecrafts_files]
+
+        if len(events_files) == len(spacecrafts_files):
+            pass
+        elif len(spacecrafts_files) == 1:
+            spacecrafts_files = spacecrafts_files * len(events_files)
+            log.info(
+                f"Using {spacecrafts_files} of every events files in {events_files}"
+            )
+        else:
+            raise ValueError(
+                "spacecraft_files must be either a list of the same length as events_file or of length one"
+            )
+
+        for ev_file, sp_file in zip(events_files, spacecrafts_files):
+            events = FermiEvents(ev_file)
+            spacecraft = FermiSpacecraft(sp_file)
+            observations.append(
+                FermiObservation(fermi_events=events, fermi_spacecraft=spacecraft)
+            )
+
+        return FermiObservations(observations=observations)
