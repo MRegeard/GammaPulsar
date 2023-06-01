@@ -17,9 +17,14 @@ __all__ = [
 ]
 
 
+class FermiFiles:
+    def __init__(self, events_files, spacecraft_file):
+        self._events_files = events_files
+        self._spacecraft_files = spacecraft_file
+
+
 class FermiEventList:
     def __init__(self, table, primary_hdu=None, filename=None):
-
         self.table = table
         self._primary_hdu = primary_hdu
         self._filename = filename
