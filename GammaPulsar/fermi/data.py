@@ -1,5 +1,7 @@
 import collections.abc
 import logging as log
+from astropy.io import fits
+from astropy.table import Table
 
 __all__ = [
     "FermiEvents",
@@ -15,17 +17,41 @@ class FermiEvents:
 
     Parameters
     ----------
-    event_file : str
+    filename : str
         Path to the event file
     """
 
-    def __init__(self, event_file):
-        self._event_file = event_file
+    def __init__(self, filename):
+        self._filename = filename
+        self._table = None
+        self._primary_hdu = None
 
     @property
-    def event_file(self):
+    def filename(self):
         """Path to the event file"""
-        return self._event_file
+        return self._filename
+
+    @property
+    def table(self):
+        """Load events table"""
+        if self._table is None:
+            self._table = self._load_file(self.filename, hdu_type="events")
+        return self._table
+
+    @property
+    def primary_hdu(self):
+        """Load PrimaryHDU"""
+        if self._primary_hdu is None:
+            self._primary_hdu = self._load_file(self.filename, hdu_type="primary")
+        return self._primary_hdu
+
+    @staticmethod
+    def _load_file(filename, hdu_type="events", **kwargs):
+        kwargs.setdefault("hdu", "EVENTS")
+        if type == "events":
+            return Table.read(filename, **kwargs)
+        if type == "primary":
+            return fits.PrimaryHDU.readfrom(filename)
 
 
 class FermiSpacecraft:
