@@ -47,11 +47,28 @@ class FermiEvents:
 
     @staticmethod
     def _load_file(filename, hdu_type="events", **kwargs):
+        """
+        Static method that load events and primary hdu from a fits file
+
+        Parameters
+        ----------
+        filename : str
+            Path to the fits file
+        hdu_type : str
+            HDU to open. Either "events" or "primary"
+        **kwargs : dict
+            Keyword arguments to pass to either events hdu or primary hdu depending on `hdu_type`
+
+        Returns
+        -------
+        table or primary_hdu : `astropy.table.Table` or `astropy.io.fits.PrimaryHDU`
+            Events table or PrimaryHDU depending on `hdu_type` .
+        """
         kwargs.setdefault("hdu", "EVENTS")
-        if type == "events":
+        if hdu_type == "events":
             return Table.read(filename, **kwargs)
-        if type == "primary":
-            return fits.PrimaryHDU.readfrom(filename)
+        if hdu_type == "primary":
+            return fits.PrimaryHDU.readfrom(filename, **kwargs)
 
 
 class FermiSpacecraft:
