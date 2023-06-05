@@ -192,7 +192,7 @@ class FermiPhaseMaker:
 
         meta_dict = dict()
         meta_dict["COLUMN_NAME"] = column_name
-        meta_dict["EPHEMERIS_FILE"] = ephemeris_file
+        meta_dict["EPHEMERIS_FILE"] = str(ephemeris_file)
         meta_dict["PINT_VERS"] = pint.__version__
 
         for key in key_model:
@@ -205,7 +205,7 @@ class FermiPhaseMaker:
                 meta_dict[key] = None
 
         meta_dict["PHASE_OFFSET"] = offset
-        meta_dict["DATA"] = Time.now().mjd
+        meta_dict["DATE"] = Time.now().mjd
 
         return str(meta_dict)
 

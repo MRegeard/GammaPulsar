@@ -1,8 +1,11 @@
 import os
 from pathlib import Path
+from unittest import TestCase
 import pytest
 from numpy.testing import assert_allclose
 from astropy.coordinates import SkyCoord
+from astropy.time import Time
+import pint
 from gammapy.utils.scripts import make_path
 from pint.models import TimingModel
 from GammaPulsar.fermi import FermiObservation, FermiObservations, FermiPhaseMaker
@@ -78,7 +81,28 @@ class TestFermiPhaseMaker:
 
         meta_str = self.maker1._make_meta(self.maker1.ephemeris_file, self.maker1.model)
 
-        assert (
-            meta_str
-            == "{'COLUMN_NAME': 'PULSE_PHASE', 'EPHEMERIS_FILE': PosixPath('/Users/mregeard/Workspace/data/GammaPulsar-data/ephemeris/vela/J0835-4510_tnfit_220401.par'), 'PINT_VERS': '0.9.5', 'PSR': 'J0835-4510', 'START': 54682.71577, 'FINISH': 59662.01623, 'TZRMJD': 56623.155266039132176, 'TZRSITE': 'coe', 'TZRFREQ': None, 'EPHEM': 'DE421', 'RAJ': 8.589058747222223, 'DECJ': -45.17635419444444, 'PHASE_OFFSET': None, 'DATA': 60100.7057189725}"
+        assert isinstance(meta_str, str)
+
+        meta_dict = eval(meta_str)
+
+        check_dict = {
+            "COLUMN_NAME": "PULSE_PHASE",
+            "EPHEMERIS_FILE": str(self.maker1.ephemeris_file),
+            "PINT_VERS": str(pint.__version__),
+            "PSR": "J0835-4510",
+            "START": 54682.71577,
+            "FINISH": 59662.01623,
+            "TZRMJD": 56623.15526603913,
+            "TZRSITE": "coe",
+            "TZRFREQ": None,
+            "EPHEM": "DE421",
+            "RAJ": 8.589058747222223,
+            "DECJ": -45.17635419444444,
+            "PHASE_OFFSET": None,
+            "DATE": Time.now().mjd,
+        }
+
+        TestCase.assertDictEqual(
+            {k: v for k, v in meta_dict.items() if k not in ["DATE"]},
+            {k: v for k, v in check_dict.items() if k not in ["DATE"]},
         )
