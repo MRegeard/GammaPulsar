@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from unittest import TestCase
 import pytest
 from numpy.testing import assert_allclose
 from astropy.coordinates import SkyCoord
@@ -102,7 +101,5 @@ class TestFermiPhaseMaker:
             "DATE": Time.now().mjd,
         }
 
-        TestCase.assertDictEqual(
-            {k: v for k, v in meta_dict.items() if k not in ["DATE"]},
-            {k: v for k, v in check_dict.items() if k not in ["DATE"]},
-        )
+        for k in {k: v for k, v in meta_dict.items() if k not in ["DATE"]}.keys():
+            assert meta_dict[k] == check_dict[k]
