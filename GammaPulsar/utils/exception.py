@@ -1,3 +1,6 @@
+__all__ = ["EphemerisKeyNotFound"]
+
+
 class EphemerisKeyNotFound(Exception):
     """
     Exception raised when a ephemeris file key is not found.
@@ -16,4 +19,4 @@ class EphemerisKeyNotFound(Exception):
             self.message = f"{key} not found in ephemeris file !"
         else:
             self.message = f"{key} not found in ephemeris file {ephemeris_file} !"
-        super().__init__(self.message)
+        super(EphemerisKeyNotFound, self).__init__(self.key, self.message)

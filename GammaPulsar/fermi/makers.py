@@ -1,8 +1,10 @@
 import logging as log
+import os
 import numpy as np
 from astropy.io import fits
 from astropy.time import Time
 import pint
+from gammapy.utils.scripts import make_path
 from pint import models, toa
 from pint.fermi_toas import load_Fermi_TOAs
 from pint.observatory.satellite_obs import get_satellite_observatory
@@ -33,6 +35,12 @@ class FermiPhaseMaker:
         Whether to include the GPS clock correction. Defaults to False.
     planets : boor or None
         Whether to apply Shapiro delays based on planet positions.
+    weightcolumn : str
+        Specifies the FITS column name to read the photon weights from.
+        The special value 'CALC' causes the weights to be computed
+        empirically as in Philippe Bruel's SearchPulsation code.
+    targetcoord : astropy.coordinates.SkyCoord
+        Source coordinate for weight computation if weightcolumn=='CALC'
     """
 
     def __init__(
@@ -43,18 +51,26 @@ class FermiPhaseMaker:
         include_bipm=False,
         include_gps=False,
         planets=False,
+        weightcolumn=None,
+        targetcoord=None,
     ):
 
         if not isinstance(observation, FermiObservation):
             raise TypeError("observation must be instance of FermiObservation")
-        self.ephemeris_file = ephemeris_file
+        ephemeris_file_path = make_path(ephemeris_file)
+        if os.path.isfile(ephemeris_file_path):
+            self.ephemeris_file = ephemeris_file_path
+        else:
+            raise FileNotFoundError(f"{ephemeris_file} is not a path to a file.")
         self.observation = observation
-        self.model = models.get_model(ephemeris_file)
+        self.model = models.get_model(ephemeris_file_path)
         self.ephem = ephem
         self.include_bipm = include_bipm
         self.include_gps = include_gps
         self.planets = planets
         self.phases = None
+        self.weightcolumn = weightcolumn
+        self.targetcoord = targetcoord
 
     def compute_phase(self, **kwargs):
         """
@@ -67,10 +83,15 @@ class FermiPhaseMaker:
         """
 
         get_satellite_observatory(
-            "Fermi", self.observation.fermi_spacecraft, overwrite=True
+            "Fermi", self.observation.fermi_spacecraft.filename, overwrite=True
         )
 
-        toa_list = load_Fermi_TOAs(ft1name=self.observation.fermi_events, **kwargs)
+        toa_list = load_Fermi_TOAs(
+            ft1name=self.observation.fermi_events.filename,
+            weightcolumn=self.weightcolumn,
+            targetcoord=self.targetcoord,
+            **kwargs,
+        )
 
         ts = toa.get_TOAs_list(
             toa_list=toa_list,
@@ -144,7 +165,7 @@ class FermiPhaseMaker:
         ----------
         ephemeris_file : str
             Path to the ephemeris file that was used for the pulsar phase computation.
-        model : `pint.models.Model` ### TO CHECK ###
+        model : `pint.models.TimingModel`
             The PINT model for the epheremis file.
         column_name : str
             The name of the column on which the pulsar phase has been written. Default is PULSE_PHASE.
@@ -156,46 +177,33 @@ class FermiPhaseMaker:
             The string of the dictionary that is build from the different metadata gather for the pulsar phase
             computation?
         """
-        meta_dict = dict
+
+        key_model = [
+            "PSR",
+            "START",
+            "FINISH",
+            "TZRMJD",
+            "TZRSITE",
+            "TZRFREQ",
+            "EPHEM",
+            "RAJ",
+            "DECJ",
+        ]
+
+        meta_dict = dict()
         meta_dict["COLUMN_NAME"] = column_name
         meta_dict["EPHEMERIS_FILE"] = ephemeris_file
         meta_dict["PINT_VERS"] = pint.__version__
-        try:
-            meta_dict["PSRJ"] = model.PSR.value
-        except EphemerisKeyNotFound(key="PSR", ephemeris_file=ephemeris_file):
-            pass
-        try:
-            meta_dict["START"] = model.START.value
-        except EphemerisKeyNotFound(key="START", ephemeris_file=ephemeris_file):
-            pass
-        try:
-            meta_dict["FINISH"] = model.FINISH.value
-        except EphemerisKeyNotFound(key="FINISH", ephemeris_file=ephemeris_file):
-            pass
-        try:
-            meta_dict["TZRMJD"] = model.TZRMJD.value
-        except EphemerisKeyNotFound(key="TZRMJD", ephemeris_file=ephemeris_file):
-            pass
-        try:
-            meta_dict["TZRSITE"] = model.TZRSITE.value
-        except EphemerisKeyNotFound(key="TZRSITE", ephemeris_file=ephemeris_file):
-            pass
-        try:
-            meta_dict["TZRFREQ"] = model.TZRFREQ.value
-        except EphemerisKeyNotFound(key="TZRFREQ", ephemeris_file=ephemeris_file):
-            pass
-        try:
-            meta_dict["EPHEM"] = model.EPHEM.value
-        except EphemerisKeyNotFound(key="EPHEM", ephemeris_file=ephemeris_file):
-            pass
-        try:
-            meta_dict["EPHEM_RA"] = model.RAJ.value
-        except EphemerisKeyNotFound(key="RAJ", ephemeris_file=ephemeris_file):
-            pass
-        try:
-            meta_dict["EPHEM_DEC"] = model.DECJ.value
-        except EphemerisKeyNotFound(key="DECJ", ephemeris_file=ephemeris_file):
-            pass
+
+        for key in key_model:
+            try:
+                meta_dict[key] = getattr(model, key).value
+            except AttributeError:
+                print(
+                    EphemerisKeyNotFound(key=key, ephemeris_file=ephemeris_file).message
+                )
+                meta_dict[key] = None
+
         meta_dict["PHASE_OFFSET"] = offset
         meta_dict["DATA"] = Time.now().mjd
 
