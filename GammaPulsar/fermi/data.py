@@ -1,7 +1,9 @@
 import collections.abc
 import logging as log
+import os
 from astropy.io import fits
 from astropy.table import Table
+from gammapy.utils.scripts import make_path
 
 __all__ = [
     "FermiEvents",
@@ -22,7 +24,11 @@ class FermiEvents:
     """
 
     def __init__(self, filename):
-        self._filename = filename
+        filename_path = make_path(filename)
+        if os.path.isfile(filename_path):
+            self._filename = filename_path
+        else:
+            raise FileNotFoundError(f"{filename} is not a path to a file.")
         self._table = None
         self._primary_hdu = None
 
@@ -77,17 +83,21 @@ class FermiSpacecraft:
 
     Parameters
     ----------
-    spacecraft_file : str
+    filename : str
         Path to the spacecraft file
     """
 
-    def __init__(self, spacecraft_file):
-        self._spacecraft_file = spacecraft_file
+    def __init__(self, filename):
+        filename_path = make_path(filename)
+        if os.path.isfile(filename_path):
+            self._filename = filename_path
+        else:
+            raise FileNotFoundError(f"{filename} is not a path to a file.")
 
     @property
-    def spacecraft_file(self):
+    def filename(self):
         """Path to the spacecraft file"""
-        return self._spacecraft_file
+        return self._filename
 
 
 class FermiObservation:
@@ -103,6 +113,14 @@ class FermiObservation:
     """
 
     def __init__(self, fermi_events, fermi_spacecraft):
+        if not isinstance(fermi_events, FermiEvents):
+            raise TypeError(
+                f"parameter fermi_events must be an instance of {FermiEvents.__name__}, given {type(fermi_events)}"
+            )
+        if not isinstance(fermi_spacecraft, FermiSpacecraft):
+            raise TypeError(
+                f"parameter fermi_spacecraft must be an instance of {FermiSpacecraft.__name__}, given {type(fermi_spacecraft)}"
+            )
         self._fermi_events = fermi_events
         self._fermi_spacecraft = fermi_spacecraft
 
@@ -178,6 +196,8 @@ class FermiObservations(collections.abc.MutableSequence):
         observations = []
         if isinstance(spacecrafts_files, str):
             spacecrafts_files = [spacecrafts_files]
+        if isinstance(events_files, str):
+            events_files = [events_files]
 
         if len(events_files) == len(spacecrafts_files):
             pass
