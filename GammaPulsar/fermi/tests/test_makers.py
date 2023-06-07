@@ -111,15 +111,34 @@ class TestFermiPhaseMaker:
         event_hdu = hdulist[1]
 
         check_pulse_overwrite = self.maker1._check_column_name(
-            event_hdu=event_hdu, column_name="PULSE_PHASE", overwrite=True
+            event_hdu=event_hdu, column_name="PULSE_PHASE"
         )
         check_energy_overwrite = self.maker1._check_column_name(
-            event_hdu=event_hdu, column_name="ENERGY", overwrite=True
-        )
-        check_energy_not_overwrite = self.maker1._check_column_name(
-            event_hdu=event_hdu, column_name="ENERGY", overwrite=False
+            event_hdu=event_hdu, column_name="ENERGY"
         )
 
         assert check_pulse_overwrite is True
-        assert check_energy_overwrite is True
-        assert check_energy_not_overwrite is False
+        assert check_energy_overwrite is False
+
+    @disable_logging_library(name="pint")
+    def test_write_column_and_meta(self, tmp_path):
+
+        filename = tmp_path / "written_file_fermi_phase_maker.fits"
+
+        if self.maker1.phases is None:
+            self.maker1.compute_phase()
+
+        self.maker1.write_column_and_meta(filename=filename)
+
+        hdulist = fits.open(filename)
+
+        event_hdu = hdulist[1]
+        header = event_hdu.header
+
+        assert_allclose(event_hdu.data["PULSE_PHASE"].sum(), 2276.69356911)
+        assert eval(header["PHSE_LOG"])["COLUMN_NAME"] == "PULSE_PHASE"
+
+        with pytest.raises(ValueError):
+            self.maker1.write_column_and_meta(
+                filename=filename, column_name="ENERGY", overwrite=False
+            )

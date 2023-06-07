@@ -132,27 +132,33 @@ class FermiPhaseMaker:
         event_header = event_hdu.header
         event_data = event_hdu
 
-        if self._check_column_name(
-            event_hdu=event_hdu, column_name=column_name, overwrite=overwrite
-        ):
-            event_data[column_name] = self.phases
-        else:
+        is_check = self._check_column_name(event_hdu=event_hdu, column_name=column_name)
+
+        if is_check:
+
+            phasecol = fits.ColDefs(
+                [fits.Column(name=column_name, format="D", array=self.phases)]
+            )
+            event_header["PHSE_LOG"] = self._make_meta(
+                self.ephemeris_file, self.model, column_name=column_name
+            )
+            bin_table = fits.BinTableHDU.from_columns(
+                event_hdu.columns + phasecol, header=event_header, name=event_hdu.name
+            )
+            hdulist[1] = bin_table
+
+        elif not is_check and overwrite:
+
+            event_data.data[column_name] = self.phases
+            event_header["PHSE_LOG"] = self._make_meta(
+                self.ephemeris_file, self.model, column_name=column_name
+            )
+
+        elif not is_check and not overwrite:
             raise ValueError(
                 f"Column named {column_name} already exist in file {self.observation.fermi_events.filename}"
                 f"and overwrite is set to {overwrite}."
             )
-
-        phasecol = fits.ColDefs(
-            [fits.Column(name=column_name, format="D", array=self.phases)]
-        )
-        event_header["PHSE_LOG"] = self._make_meta(
-            self.ephemeris_file, self.model, column_name=column_name
-        )
-        bin_table = fits.BinTableHDU.from_columns(
-            event_hdu.columns + phasecol, header=event_header, name=event_hdu.name
-        )
-
-        hdulist[1] = bin_table
 
         if filename is None:
             hdulist.flush(verbose=True, output_verify="warn")
@@ -215,10 +221,10 @@ class FermiPhaseMaker:
         return str(meta_dict)
 
     @staticmethod
-    def _check_column_name(event_hdu, column_name, overwrite):
+    def _check_column_name(event_hdu, column_name):
         """
-        Check the if a column name named as the `column_name` parameter exist in the `event_hdu` , and whether
-        it is compatible with the overwrite parameter.
+        Check the if a column name named as the `column_name` parameter exist in the `event_hdu`. Returns True if
+        `column_name` is not in `event_hdu`, `False` otherwise.
 
         Parameters
         ----------
@@ -226,8 +232,6 @@ class FermiPhaseMaker:
             The FITS table to check for.
         column_name : str
             The name of the column to check.
-        overwrite : bool
-            Whether the column can be overwritten or not.
 
         Returns
         -------
@@ -237,13 +241,8 @@ class FermiPhaseMaker:
         if column_name not in event_hdu.columns.names:
             log.info(f"Writing {column_name} to events file")
             return True
-        if column_name in event_hdu.columns.names and overwrite is True:
+        else:
             log.info(
                 f"Column named {column_name} found in events file, overwriting it !"
-            )
-            return True
-        if column_name in event_hdu.columns.names and overwrite is False:
-            log.info(
-                f"Column named {column_name} found in events file, overwrite is set to {overwrite} ! Cannot overwrite it"
             )
             return False
