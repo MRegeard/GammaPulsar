@@ -136,6 +136,11 @@ class FermiPhaseMaker:
             event_hdu=event_hdu, column_name=column_name, overwrite=overwrite
         ):
             event_data[column_name] = self.phases
+        else:
+            raise ValueError(
+                f"Column named {column_name} already exist in file {self.observation.fermi_events.filename}"
+                f"and overwrite is set to {overwrite}."
+            )
 
         phasecol = fits.ColDefs(
             [fits.Column(name=column_name, format="D", array=self.phases)]
