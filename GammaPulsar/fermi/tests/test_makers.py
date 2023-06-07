@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 from numpy.testing import assert_allclose
 from astropy.coordinates import SkyCoord
+from astropy.io import fits
 from astropy.time import Time
 import pint
 from gammapy.utils.scripts import make_path
@@ -103,3 +104,22 @@ class TestFermiPhaseMaker:
 
         for k in {k: v for k, v in meta_dict.items() if k not in ["DATE"]}.keys():
             assert meta_dict[k] == check_dict[k]
+
+    def test_check_column_name(self):
+
+        hdulist = fits.open(self.maker1.observation.fermi_events.filename)
+        event_hdu = hdulist[1]
+
+        check_pulse_overwrite = self.maker1._check_column_name(
+            event_hdu=event_hdu, column_name="PULSE_PHASE", overwrite=True
+        )
+        check_energy_overwrite = self.maker1._check_column_name(
+            event_hdu=event_hdu, column_name="ENERGY", overwrite=True
+        )
+        check_energy_not_overwrite = self.maker1._check_column_name(
+            event_hdu=event_hdu, column_name="ENERGY", overwrite=False
+        )
+
+        assert check_pulse_overwrite is True
+        assert check_energy_overwrite is True
+        assert check_energy_not_overwrite is False
