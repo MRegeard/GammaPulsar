@@ -17,6 +17,9 @@ htmlcov
 .coverage.subprocess
 .hypothesis
 
+#examples
+*.ipynb_checkpoints
+
 # Sphinx
 _build
 
