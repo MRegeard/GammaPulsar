@@ -13,4 +13,5 @@ Once this is done, you will need to create a conda environment::
     $ cd GammaPulsar
     $ conda env create -f environment.ymal
     $ conda activate GammaPulsar
+    $ pip install -e .
 
